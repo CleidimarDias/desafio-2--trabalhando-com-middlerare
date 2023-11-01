@@ -11,7 +11,6 @@ const users = [];
 
 function checksExistsUserAccount(request, response, next) {
   const { username } = request.headers;
-  console.log(username)
   const user = users.find((user) => user.username === username);
   if (!user) {
     return response.status(404).json({ error: "Usuário não encontrado" })
@@ -22,20 +21,16 @@ function checksExistsUserAccount(request, response, next) {
 
 function checksCreateTodosUserAvailability(request, response, next) {
   const user = request.user;
-  console.log(user);
 
   if (user.pro === false && user.todos.length >= 10) {
     return response.status(403).json({ Error: "Number of Todos for plan free is full" })
   }
-
   return next();
 }
 
 function checksTodoExists(request, response, next) {
   const { username } = request.headers;
   const { id } = request.params;
-
-  console.log("id: " + id);
 
   if (!validate(id)) {
     return response.status(400).json({ Error: "Id isint valid UUID" })
