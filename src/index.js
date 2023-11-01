@@ -10,30 +10,69 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  console.log(username)
+  const user = users.find((user) => user.username === username);
+  if (!user) {
+    return response.status(404).json({ error: "Usuário não encontrado" })
+  }
+  request.user = user;
+  return next();
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const user = request.user;
+  console.log(user);
+
+  if (user.pro === false && user.todos.length >= 10) {
+    return response.status(403).json({ Error: "Number of Todos for plan free is full" })
+  }
+
+  return next();
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  const { id } = request.params;
+
+  console.log("id: " + id);
+
+  if (!validate(id)) {
+    return response.status(400).json({ Error: "Id isint valid UUID" })
+  }
+
+  const user = users.find((user) => user.username === username);
+  if (!user) {
+    return response.status(404).json({ Error: "User not found" })
+  }
+  const todo = user.todos.find((todo) => todo.id === id);
+  if (!todo.id) {
+    return response.status(404).json({ Error: "Todo not found" })
+  }
+  request.user = user;
+  request.todo = todo;
+  return next();
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+  const user = users.find((user) => user.id === id);
+
+  if (!user) {
+    return response.status(404).json({ Error: "User not found" })
+  }
+
+  request.user = user;
+  return next();
 }
 
 app.post('/users', (request, response) => {
   const { name, username } = request.body;
-
   const usernameAlreadyExists = users.some((user) => user.username === username);
 
   if (usernameAlreadyExists) {
     return response.status(400).json({ error: 'Username already exists' });
   }
-
   const user = {
     id: uuidv4(),
     name,
@@ -82,9 +121,7 @@ app.post('/todos', checksExistsUserAccount, checksCreateTodosUserAvailability, (
     done: false,
     created_at: new Date()
   };
-
   user.todos.push(newTodo);
-
   return response.status(201).json(newTodo);
 });
 
@@ -102,7 +139,6 @@ app.patch('/todos/:id/done', checksTodoExists, (request, response) => {
   const { todo } = request;
 
   todo.done = true;
-
   return response.json(todo);
 });
 
